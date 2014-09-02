@@ -1,0 +1,7 @@
+#!/usr/bin/env jruby
+require File.expand_path("../../lib/data_bridge/cli",__FILE__)
+require File.expand_path("../../lib/data_bridge/run",__FILE__)
+
+options = DataBridge::CLI.read
+
+DataBridge::Run.run(options)

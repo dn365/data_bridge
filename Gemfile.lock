@@ -1,0 +1,16 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    influxdb (0.1.8)
+      json
+    jdbc-sqlite3 (3.7.2.1)
+    json (1.8.1-java)
+    sequel (4.13.0)
+
+PLATFORMS
+  java
+
+DEPENDENCIES
+  influxdb
+  jdbc-sqlite3
+  sequel
