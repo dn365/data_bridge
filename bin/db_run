@@ -4,4 +4,10 @@ require File.expand_path("../../lib/data_bridge/run",__FILE__)
 
 options = DataBridge::CLI.read
 
-DataBridge::Run.run(options)
+if options[:config_file] && options[:log_file]
+  DataBridge::Run.run(options)
+else
+  return print "Options log_file file not found. Please see help -h\n" if options[:config_file]
+  return print "Options config yaml file not found. Please see help -h\n" if options[:config_file]
+  print "Options config yaml file and log_file file not found. Please see help -h\n"
+end

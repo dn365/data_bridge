@@ -19,7 +19,7 @@ module DataBridge
           options[:config_file] = file
         end
 
-        opts.on('-l', '--log_file FILE', 'Log Files .') do |log|
+        opts.on('-l', '--log_file FILE', 'Log output file path .') do |log|
           options[:log_file] = log
         end
 
