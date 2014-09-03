@@ -31,7 +31,7 @@ module DataBridge
     end
 
     def is_output?
-      return true if @conf["outputa"] && @conf["output"].any?
+      return true if @conf["output"] && @conf["output"].any?
       false
     end
 
@@ -39,7 +39,7 @@ module DataBridge
 end
 
 ###test###
-# 
+#
 # conf = DataBridge::LoadConfig.new("conf/config_jf_test.yml")
 # puts conf.is_input?
 # puts conf.input
