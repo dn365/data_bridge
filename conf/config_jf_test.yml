@@ -1,14 +1,16 @@
 output:
   - adapter: influxdb
-    host: 10.70.181.211,127.0.0.1
+    host: 10.70.181.208
+    port: 80 #default 8086
     username: root
     password: 1qaz2wsx
-    database: app_data
+    #use_ssl: false
+    database: test_data
 
 input:
   - series_name: cb_process_perf.1d
     desc: 计费分析批价性能
-    cron: "* * * * *"
+    cron: "0,5,10,15,20,25,30,35,40,45,50,55 * * * *"
     runtime:
       interval: 86400   #sql select time interval
       delay_time: 1200
@@ -24,9 +26,9 @@ input:
         database: "zjcb1"
         sql_group:
           - sql: "select a.a_filter_sum a_filter_sum, a.a_filter_speed a_filter_speed, b.b_filter_sum b_filter_sum, b.b_filter_speed b_filter_speed, c.c_filter_sum c_filter_sum, c.c_filter_speed c_filter_speed, d.d_filter_sum d_filter_sum, d.d_filter_speed d_filter_speed, a1.a_rating_sum a_rating_sum, a1.a_rating_speed a_rating_speed, b1.b_rating_sum b_rating_sum, b1.b_rating_speed b_rating_speed, c1.c_rating_sum c_rating_sum, c1.c_rating_speed c_rating_speed, d1.d_rating_sum d_rating_sum, d1.d_rating_speed d_rating_speed from (SELECT sum(in_sum) a_filter_sum, round(avg(speed)) a_filter_speed FROM jfa1.monitor_efficiency_t where substr(process_time, 1, 8) >= '$begin'AND substr(process_time, 1, 8) < '$end'and module_type = 'filter'and SERVICE = 'gprs'and centre = 'A'group by substr(process_time, 1, 8)) a, (SELECT sum(in_sum) b_filter_sum, round(avg(speed)) b_filter_speed FROM jfa1.monitor_efficiency_t where substr(process_time, 1, 8) >= '$begin'AND substr(process_time, 1, 8) < '$end'and module_type = 'filter'and SERVICE = 'gprs'and centre = 'B'group by substr(process_time, 1, 8)) b, (SELECT sum(in_sum) c_filter_sum, round(avg(speed)) c_filter_speed FROM jfa1.monitor_efficiency_t where substr(process_time, 1, 8) >= '$begin'AND substr(process_time, 1, 8) < '$end'and module_type = 'filter'and SERVICE = 'gprs'and centre = 'C'group by substr(process_time, 1, 8)) c, (SELECT sum(in_sum) d_filter_sum, round(avg(speed)) d_filter_speed FROM jfa1.monitor_efficiency_t where substr(process_time, 1, 8) >= '$begin'AND substr(process_time, 1, 8) < '$end'and module_type = 'filter'and SERVICE = 'gprs'and centre = 'D'group by substr(process_time, 1, 8)) d, (SELECT sum(in_sum) a_rating_sum, round(avg(speed)) a_rating_speed FROM jfa1.monitor_efficiency_t where substr(process_time, 1, 8) >= '$begin'AND substr(process_time, 1, 8) < '$end'and module_type = 'rating'and SERVICE = 'gprs'and centre = 'A'group by substr(process_time, 1, 8)) a1, (SELECT sum(in_sum) b_rating_sum, round(avg(speed)) b_rating_speed FROM jfa1.monitor_efficiency_t where substr(process_time, 1, 8) >= '$begin'AND substr(process_time, 1, 8) < '$end'and module_type = 'rating'and SERVICE = 'gprs'and centre = 'B'group by substr(process_time, 1, 8)) b1, (SELECT sum(in_sum) c_rating_sum, round(avg(speed)) c_rating_speed FROM jfa1.monitor_efficiency_t where substr(process_time, 1, 8) >= '$begin'AND substr(process_time, 1, 8) < '$end'and module_type = 'rating'and SERVICE = 'gprs'and centre = 'C'group by substr(process_time, 1, 8)) c1, (SELECT sum(in_sum) d_rating_sum, round(avg(speed)) d_rating_speed FROM jfa1.monitor_efficiency_t where substr(process_time, 1, 8) >= '$begin'AND substr(process_time, 1, 8) < '$end'and module_type = 'rating'and SERVICE = 'gprs'and centre = 'D'group by substr(process_time, 1, 8)) d1"
-            custom_key_and_value_column:
-              key: column1
-              value: column2
+            # custom_key_and_value_column:
+            #   key: column1
+            #   value: column2
             column_set: ["a_filter_sum","a_filter_speed","b_filter_sum","b_filter_speed","c_filter_sum","c_filter_speed","d_filter_sum","d_filter_speed","a_rating_sum","a_rating_speed","b_rating_sum","b_rating_speed","c_rating_sum","c_rating_speed","d_rating_sum","d_rating_speed"]
             options:
               $beginmonth: "%Y%m"
