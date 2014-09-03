@@ -3,17 +3,7 @@ module DataBridge
   class Influxdb
 
     def initialize options={}
-      if options.any?
-        begin
-          @influxdb = InfluxDB::Client.new options["database"], hosts: options["host"], username: options["user"], password: options["password"]
-        rescue => e
-          raise e
-          exit 1
-        end
-      else
-        print "Not Found options .\n"
-        exit 1
-      end
+      @influxdb = InfluxDB::Client.new options["database"], hosts: options["host"], port: options["port"] || 8086, username: options["user"], password: options["password"]
     end
 
     def write_point(tname,data)
