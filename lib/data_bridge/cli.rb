@@ -24,11 +24,11 @@ module DataBridge
         end
 
         opts.on('-t', '--max_thread', 'The maximum number of threads running program, default value 10') do |thread|
-          options[:max_thread] = thread || 10
+          options[:max_thread] = thread
         end
 
         opts.on('-o', '--thread_timeout', 'Thread timeout value, default value 1800 Seconds.') do |thread_timeout|
-          options[:thread_timeout] = thread_timeout || 1800
+          options[:thread_timeout] = thread_timeout
         end
         # opts.on('-b', '--background', 'Fork into the background') do
         #   options[:daemonize] = true
