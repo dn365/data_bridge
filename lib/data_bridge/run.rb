@@ -5,7 +5,7 @@ module DataBridge
   class Run
 
     def self.run(options={},sleep_time = 1)
-      data_bridge = self.new(options[:config_file],options[:log_file],options[:max_thread] || 10,options[:thread_timeout]|| 1800)
+      data_bridge = self.new(options[:config_file],options[:log_file],options[:max_thread] || 10,options[:thread_timeout] || 1800)
       loop do
         data_bridge.execute Time.now
         sleep sleep_time

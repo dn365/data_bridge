@@ -5,6 +5,8 @@ require File.expand_path("../../lib/data_bridge/run",__FILE__)
 options = DataBridge::CLI.read
 
 if options[:config_file] && options[:log_file]
+  options[:max_thread] = options[:max_thread].to_i if options[:max_thread]
+  options[:thread_timeout] = options[:thread_timeout].to_i if options[:max_thread]
   DataBridge::Run.run(options)
 else
   return print "Options log_file file not found. Please see help -h\n" if options[:config_file]
