@@ -60,8 +60,12 @@ module DataBridge
                 data[:sequence_number] = sequence_data if sequence_data
               end
             end
-            ocontent.write_point(tabname,data)
-            @logger.info("SeriesName: #{tabname}, #{"Description: " << conf_option[:desc].to_s if conf_option[:desc]}, #{data[:sequence_number] ? "Updated" : "Created"} at #{Time.at(data[:time])}, Event: #{data.to_json.to_s}")
+            begin
+              ocontent.write_point(tabname,data)
+              @logger.info("SeriesName: #{tabname}, #{"Description: " << conf_option[:desc].to_s if conf_option[:desc]}, #{data[:sequence_number] ? "Updated" : "Created"} at #{Time.at(data[:time])}, Event: #{data.to_json.to_s}")
+            rescue => e
+              @logger.error(e.to_s)
+            end
           end
         end
       end
