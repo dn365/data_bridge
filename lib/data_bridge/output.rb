@@ -4,6 +4,7 @@ module DataBridge
   class Output < DataBridge::Base
 
     def initialize(conf_file,logfile)
+      # @conf_file = conf_file
       @logger = DataBridge::Logfile.new(logfile)
       @conf = DataBridge::LoadConfig.new(conf_file)
       @output_content = Hash.new
@@ -12,15 +13,19 @@ module DataBridge
 
     def output_content
       if @conf.is_output?
+        # @logger.debug("Put out #{@conf.output}")
         @conf.output.each do |conf|
-          @output_content[options["adapter"]] = content_type(conf) unless @output_content[options["adapter"]]
+          @output_content[conf["adapter"]] = content_type(conf) unless @output_content[conf["adapter"]]
         end
       end
+      @output_content
+      @logger.debug("Put out #{@output_content}")
     end
 
     def content_type options
       case options["adapter"]
       when "influxdb"
+        options["host"] = options["host"].split(",")
         return DataBridge::Influxdb.new options
       else
         nil
@@ -28,7 +33,7 @@ module DataBridge
     end
 
     def output(tabname,data={},conf_option = {})
-      return @logger.error("Input interface data is empty.") if data.nil? || data.empty?
+      return @logger.error("Input interface data is empty.") if data.nil? || data.empty? || (data.size.eql?(1) && data[:time])
       if @output_content.empty?
         @logger.error("Did not get to the output interface.")
         @logger.info("Event: " << data.to_json.to_s)
@@ -56,7 +61,7 @@ module DataBridge
               end
             end
             ocontent.write_point(tabname,data)
-            @logger.info("SeriesName: #{tabname}, #{"Description: " << conf_option[:desc].to_s if conf_option[:desc]}, Create at #{Time.at(data[:time])}, Event: #{data.to_json.to_s}")
+            @logger.info("SeriesName: #{tabname}, #{"Description: " << conf_option[:desc].to_s if conf_option[:desc]}, #{data[:sequence_number] ? "Updated" : "Created"} at #{Time.at(data[:time])}, Event: #{data.to_json.to_s}")
           end
         end
       end
