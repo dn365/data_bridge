@@ -18,6 +18,7 @@ module DataBridge
       @thread_timeout = thread_timeout
       @input = DataBridge::Input.new(conf_file,log_file)
       @output = DataBridge::Output.new(conf_file,log_file)
+      @logger = DataBridge::Logfile.new(log_file)
     end
 
     def execute(t)
@@ -45,7 +46,12 @@ module DataBridge
     end
 
     def thread_timeout
-      Thread.list.each{|t| t.kill if t[:time] && (Time.now - Time.parse(t[:time].to_s) > @thread_timeout) }
+      Thread.list.each do |t|
+        if t[:time] && (Time.now - Time.parse(t[:time].to_s) > @thread_timeout)
+          t.kill
+          @logger.info("Warning: Thread Name #{t[:name]} has been closed because of timeout.")
+        end
+      end
     end
 
   end
