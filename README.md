@@ -33,7 +33,7 @@
   #输出接口配置
   output:
     - adapter: influxdb
-      host: 127.0.0.1 #多host用","隔离. 示例: 192.168.1.2,182.168.1.3
+      host: 127.0.0.1 #多host用","分隔. 示例: 192.168.1.2,182.168.1.3
       port: 80 #default 8086, 可不填
       username: root
       password: root

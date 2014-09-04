@@ -51,8 +51,8 @@ module DataBridge
     end
 
     def data_type_format(data)
-      return data.to_f.round(3) if data.is_a?(Numeric)
-      return ((data.to_i.to_s == data || data.to_f.to_s == data) ? data.to_f.round(3) : data.to_s ) if data.is_a?(String)
+      return data.to_f.round(3) if data.nil? || data.is_a?(Numeric)
+      return ((data.to_i.to_s == data || data.to_f.to_s == data || data.empty?) ? data.to_f.round(3) : data.to_s ) if data.is_a?(String)
       data.to_s
     end
 
