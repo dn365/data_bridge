@@ -7,7 +7,7 @@
   * JRuby 1.7.10 或者更高版本
   * Oracle-jdbc6.jar
   * Jdbc-sqlite3-3.7.2.1
-  * Sequel-4.10.0
+  * Sequel-4.13.0
 
 #### 当前版本  
 

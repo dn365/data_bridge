@@ -23,12 +23,14 @@ module DataBridge
           c["hosts"].each do |host|
             unless @content_pool["#{host["host"]}"]
               options = delete_hash(host,["sql_group","default_options"])
-              options["logfile"] = File.dirname(@logfile).to_s << "/#{host["host"]}.log"
+              options["logfile"] = DataBridge::Logfile.new(File.dirname(@logfile).to_s << "/#{host["host"]}.log")
               @content_pool["#{host["host"]}"] = db_content(options)
             end
           end
         end
       end
+      # @logger.debug(@content_pool.to_s)
+      # @logger.debug(@series_cron.to_s)
     end
 
     def db_content(options)

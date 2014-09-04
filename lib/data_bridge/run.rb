@@ -43,6 +43,7 @@ module DataBridge
 
     def thread_available?
       Thread.list.select{|t| t[:name]}.count < @max_thread
+      # @logger.debug(Thread.list.select{|t| t[:name]}.count)
     end
 
     def thread_timeout
