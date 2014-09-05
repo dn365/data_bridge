@@ -1,6 +1,6 @@
 ## Data Bridge
 
-  基于Jruby 和 Java Jdbc 库获取自定义数据库接口的Sql数据源，输出到指定接口的中间桥接程式.
+  基于Jruby 和 Java Jdbc 库获取自定义数据库接口的Sql数据源, 输出到指定接口的中间桥接程式, 主要用于轮询结果时间线序输出和转存.
 
 ####需求环境
 
@@ -11,10 +11,10 @@
 
 #### 当前版本  
 
-  * v0.0.2 功能重构版
+  * v0.0.2.1 功能重构版
 
 #### 修复Bug
-
+  新增参数default_value初始值,multiline结果是否多行,time_column_key设置时间序列字段  
   目前只支持数据库类型为 sqlite, oracle, influxdb
 
 #### 执行参数说明  
@@ -50,6 +50,9 @@
         delay_time: 120  #设定时间段延时推移, 默认 秒单位
         output_timestamp: "start:%Y%m%d" #默认"end:%Y%m%d%H%M%S"
         update: true  #最后一次结果是否需要轮询更新
+        default_value: 0 #默认填入初始值,数字或字符串, 特殊字符串"null"表示空
+        multiline: true #布尔值,标识结果是否是多列输出
+        time_column_key: created_at #如果多行结果输出,需要标识时间序列的字段,用于多组数据时间序列拼接结果
       hosts:
         - adapter: oracle #链接数据类型
           host: localhos
