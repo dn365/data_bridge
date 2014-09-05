@@ -72,7 +72,7 @@ module DataBridge
             ocontent.write_point(tabname,data)
             if conf_option[:runtime]["multiline"]
               data.each do |d|
-                @logger.info("SeriesName: #{tabname}, #{"Description: " << conf_option[:desc].to_s if conf_option[:desc]}, Created at #{Time.at(d[:time]}, Multi Line Event: #{d.to_json.to_s}")
+                @logger.info("SeriesName: #{tabname}, #{"Description: " << conf_option[:desc].to_s if conf_option[:desc]}, Created at #{Time.at(d[:time])}, Multi Line Event: #{d.to_json.to_s}")
               end
             else
               @logger.info("SeriesName: #{tabname}, #{"Description: " << conf_option[:desc].to_s if conf_option[:desc]}, #{data[:sequence_number] ? "Updated" : "Created"} at #{Time.at(data[:time])}, Event: #{data.to_json.to_s}")

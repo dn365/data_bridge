@@ -163,7 +163,7 @@ module DataBridge
         svalue = db.select(sql_string)
         svalue.each do |row|
           temp_value = Hash.new
-          row.each{|k,v| temp_value[k.to_s.downcase.to_sym] =data_type_format(v)] }
+          row.each{|k,v| temp_value[k.to_s.downcase.to_sym] =data_type_format(v) }
           if column_set
             fix_column.each{|k| temp_value[k.to_sym] = default_value } if (fix_column = column_set - temp_value.keys.collect{|i| i.to_s}).any?
           end
