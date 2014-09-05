@@ -8,7 +8,7 @@ module DataBridge
     def delete_hash(hash,delete_key)
       if hash.is_a?(Hash)
         delete_key.map{|i| hash.delete(i) } if delete_key.is_a?(Array)
-        hash.delete(delete_key) if delete_key.is_a?(String)
+        hash.delete(delete_key) if delete_key.is_a?(String) || delete_key.is_a?(Symbol)
         return hash
       end
       hash
@@ -54,6 +54,20 @@ module DataBridge
       return data.to_f.round(3) if data.nil? || data.is_a?(Numeric)
       return ((data.to_i.to_s == data || data.to_f.to_s == data || data.empty?) ? data.to_f.round(3) : data.to_s ) if data.is_a?(String)
       data.to_s
+    end
+
+    def group_by_array_to_hash(array,group_key)
+      new_array = Array.new
+      array.group_by{|i| i[group_key.downcase.to_sym]}.each do |k,v_arr|
+        time = Time.parse(k.to_s)
+        new_hash = {time: (time - time.sec).to_i}
+        v_arr.each do |v|
+          v = delete_hash(v,group_key.downcase.to_sym)
+          new_hash = new_hash.merge(v)
+        end
+        new_array << new_hash
+      end
+      new_array
     end
 
   end

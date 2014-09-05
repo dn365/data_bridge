@@ -105,25 +105,32 @@ module DataBridge
     def execute(series_key,t)
       series_execute = series_execute_format(series_key,t)
       series_value_hash = {time: (t - t.sec).to_i}
-      hosts = series_execute[:hosts]
+      series_value_hash = [] if series_execute[:config][:runtime]["multiline"]
+      default_value = series_execute[:config][:runtime]["default_value"].eql?("null") ? nil : (series_execute[:config][:runtime]["default_value"] || 0)
+      time_column_key = series_execute[:config][:runtime]["time_column_key"]
 
+
+      hosts = series_execute[:hosts]
       hosts.each do |host_name,host_array|
         db = @content_pool[host_name]
         host_array.each do |hsql|
-          sql_value = select_sql_value(db,hsql[:sql], hsql[:custom_key_and_value_column] || {})
-          if hsql[:column_set]
-            if (fix_column = hsql[:column_set] - sql_value.keys.map{|i| i.to_s}).any?
-              fix_column.collect{|k| sql_value[k.to_sym] = 0 }
-            end
+          if series_execute[:config][:runtime]["multiline"]
+            sql_value = select_sql_value_multi_line(db,hsql[:sql],hsql[:column_set],default_value)
+            series_value_hash += sql_value
+          else
+            sql_value = select_sql_value(db,hsql[:sql],hsql[:column_set],hsql[:custom_key_and_value_column] || {},default_value)
+            series_value_hash = series_value_hash.merge(sql_value)
           end
-          series_value_hash = series_value_hash.merge(sql_value)
         end
+      end
+      if series_value_hash.is_a?(Array)
+        series_value_hash = group_by_array_to_hash(series_value_hash,time_column_key)
       end
       {data: series_value_hash, config: series_execute[:config]}
     end
 
-    #辅助函数，对执行过程和执行结果进行格式化
-    def select_sql_value(db,sql_string,custom_key_and_value_column = {})
+    #辅助函数，对执行过程和执行结果进行格式化, SQL执行结果为单行
+    def select_sql_value(db,sql_string,column_set,custom_key_and_value_column,default_value = 0)
       new_value = Hash.new
       begin
         svalue = db.select(sql_string)
@@ -143,9 +150,32 @@ module DataBridge
       rescue Sequel::DatabaseError => e
         @logger.error("#{e.to_s}, Execute SQL: #{sql_string}")
       end
+      if column_set
+        fix_column.each{|k| new_value[k.to_sym] = default_value }  if (fix_column = column_set - new_value.keys.collect{|i| i.to_s}).any?
+      end
       new_value
     end
 
+    #辅助函数，对执行过程和执行结果进行格式化, 输出多行结果格式化
+    def select_sql_value_multi_line(db,sql_string,column_set,default_value = 0)
+      new_value = Array.new
+      begin
+        svalue = db.select(sql_string)
+        svalue.each do |row|
+          temp_value = Hash.new
+          row.each{|k,v| temp_value[k.to_s.downcase.to_sym] =data_type_format(v)] }
+          if column_set
+            fix_column.each{|k| temp_value[k.to_sym] = default_value } if (fix_column = column_set - temp_value.keys.collect{|i| i.to_s}).any?
+          end
+          new_value << temp_value
+        end
+      rescue Sequel::DatabaseConnectionError => e
+        @logger.error("#{e.to_s}, Execute SQL: #{sql_string}")
+      rescue Sequel::DatabaseError => e
+        @logger.error("#{e.to_s}, Execute SQL: #{sql_string}")
+      end
+      new_value
+    end
 
   end
 end
