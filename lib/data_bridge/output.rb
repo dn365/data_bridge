@@ -39,13 +39,13 @@ module DataBridge
         @output_content.each do |okey,ocontent|
           case okey.to_s
           when "influxdb"
-            out_influxdb(tabname,data},conf_option)
+            out_influxdb(ocontent,tabname,data,conf_option)
           end
         end
       end
     end
 
-    def out_influxdb(tabname,data,conf_option)
+    def out_influxdb(odb,tabname,data,conf_option)
       if conf_option[:runtime] && (conf_option[:runtime]["output_timestamp"] || conf_option[:runtime]["update"]) && !conf_option[:runtime]["multiline"]
         #判断数据输出是的时间字段是否需要格式化
         if conf_option[:runtime]["output_timestamp"]
@@ -59,14 +59,14 @@ module DataBridge
         end
         #判断数据是否循环更新
         if conf_option[:runtime]["update"]
-            influxdb_query = ocontent.query("select * from #{tabname} where time > #{data[:time] - 1}s")
+            influxdb_query = odb.query("select * from #{tabname} where time > #{data[:time] - 1}s")
             sequence_data = influxdb_query.any? ? influxdb_query.values.flatten![0]["sequence_number"] : nil
             data[:sequence_number] = sequence_data if sequence_data
         end
       end
       if conf_option[:runtime]["multiline"] && conf_option[:runtime]["update"]
         #多行数据的sequence_number获取,数据更新
-        influxdb_query = ocontent.query("select * from #{tabname} where time > #{data.collect{|i| i[:time]}.min - 60}s")
+        influxdb_query = odb.query("select * from #{tabname} where time > #{data.collect{|i| i[:time]}.min - 10}s")
         influxdb_query.values.flatten.each do |inf|
           time = inf["time"]
           sequence_data = inf["sequence_number"]
@@ -75,10 +75,10 @@ module DataBridge
         end
       end
       if conf_option[:runtime]["multiline"]
-        data.each{|d| ocontent.write_point(tabname,d)}
+        data.each{|d| odb.write_point(tabname,d)}
         @logger.info("SeriesName: #{tabname}, #{"Description: " << conf_option[:desc].to_s if conf_option[:desc]}, Multi Line Event: #{data.to_json.to_s}")
       else
-        ocontent.write_point(tabname,data)
+        odb.write_point(tabname,data)
         @logger.info("SeriesName: #{tabname}, #{"Description: " << conf_option[:desc].to_s if conf_option[:desc]}, #{data[:sequence_number] ? "Updated" : "Created"} at #{Time.at(data[:time])}, Event: #{data.to_json.to_s}")
       end
     end
