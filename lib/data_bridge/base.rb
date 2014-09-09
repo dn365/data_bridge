@@ -52,8 +52,15 @@ module DataBridge
 
     def data_type_format(data)
       return data.to_f.round(3) if data.nil? || data.is_a?(Numeric)
-      return ((data.to_i.to_s == data || data.to_f.to_s == data || data.empty?) ? data.to_f.round(3) : data.to_s ) if data.is_a?(String)
-      data.to_s
+      if data.to_i.to_s == data
+        data.to_i
+      elsif data.to_f.to_s == data
+        data.to_f.round(3)
+      elsif data.empty?
+        data.to_i
+      else
+        data.to_s
+      end
     end
 
     def group_by_array_to_hash(array,group_key)
@@ -63,7 +70,7 @@ module DataBridge
         new_hash = {time: (time - time.sec).to_i}
         v_arr.each do |v|
           v = delete_hash(v,group_key.downcase.to_sym)
-          new_hash = new_hash.merge(v)
+          v.each{|tk,tv| new_hash[tk.downcase.to_sym] = data_type_format(tv)}
         end
         new_array << new_hash
       end

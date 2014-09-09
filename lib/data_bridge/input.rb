@@ -106,16 +106,16 @@ module DataBridge
       series_execute = series_execute_format(series_key,t)
       series_value_hash = {time: (t - t.sec).to_i}
       series_value_hash = [] if series_execute[:config][:runtime]["multiline"]
+
       default_value = series_execute[:config][:runtime]["default_value"].eql?("null") ? nil : (series_execute[:config][:runtime]["default_value"] || 0)
       time_column_key = series_execute[:config][:runtime]["time_column_key"]
-
 
       hosts = series_execute[:hosts]
       hosts.each do |host_name,host_array|
         db = @content_pool[host_name]
         host_array.each do |hsql|
-          if series_execute[:config][:runtime]["multiline"]
-            sql_value = select_sql_value_multi_line(db,hsql[:sql],hsql[:column_set],default_value)
+          if series_value_hash.is_a?(Array)
+            sql_value = select_sql_value_multi_line(db,hsql[:sql],hsql[:column_set],time_column_key,default_value)
             series_value_hash += sql_value
           else
             sql_value = select_sql_value(db,hsql[:sql],hsql[:column_set],hsql[:custom_key_and_value_column] || {},default_value)
@@ -157,18 +157,26 @@ module DataBridge
     end
 
     #辅助函数，对执行过程和执行结果进行格式化, 输出多行结果格式化
-    def select_sql_value_multi_line(db,sql_string,column_set,default_value = 0)
+    def select_sql_value_multi_line(db,sql_string,column_set,time_column_key,default_value = 0)
       new_value = Array.new
       begin
         svalue = db.select(sql_string)
-        svalue.each do |row|
-          temp_value = Hash.new
-          row.each{|k,v| temp_value[k.to_s.downcase.to_sym] =data_type_format(v) }
+        if (sv_arr = svalue.to_a).any?
           if column_set
-            fix_column.each{|k| temp_value[k.to_sym] = default_value } if (fix_column = column_set - temp_value.keys.collect{|i| i.to_s}).any?
+            svalue.to_a.each do |sv|
+              fix_column.each{|k| sv[k.to_s.downcase.to_sym] = default_value }  if (fix_column = (column_set + [time_column_key]) - sv.keys.map{|i| i.to_s}).any?
+            end
           end
-          new_value << temp_value
+          new_value += sv_arr
         end
+        # svalue.each do |row|
+        #   temp_value = Hash.new
+        #   row.each{|k,v| temp_value[k.to_s.downcase.to_sym] = (time_column_key == k.to_s.downcase) ? v : data_type_format(v) }
+        #   if column_set
+        #     fix_column.each{|k| temp_value[k.to_sym] = default_value } if (fix_column = column_set - temp_value.keys.collect{|i| i.to_s}).any?
+        #   end
+        #   new_value << temp_value
+        # end
       rescue Sequel::DatabaseConnectionError => e
         @logger.error("#{e.to_s}, Execute SQL: #{sql_string}")
       rescue Sequel::DatabaseError => e
