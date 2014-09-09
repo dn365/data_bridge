@@ -169,14 +169,6 @@ module DataBridge
           end
           new_value += sv_arr
         end
-        # svalue.each do |row|
-        #   temp_value = Hash.new
-        #   row.each{|k,v| temp_value[k.to_s.downcase.to_sym] = (time_column_key == k.to_s.downcase) ? v : data_type_format(v) }
-        #   if column_set
-        #     fix_column.each{|k| temp_value[k.to_sym] = default_value } if (fix_column = column_set - temp_value.keys.collect{|i| i.to_s}).any?
-        #   end
-        #   new_value << temp_value
-        # end
       rescue Sequel::DatabaseConnectionError => e
         @logger.error("#{e.to_s}, Execute SQL: #{sql_string}")
       rescue Sequel::DatabaseError => e
@@ -187,12 +179,3 @@ module DataBridge
 
   end
 end
-
-### test
-#
-# input = DataBridge::Input.new("conf/config_jf_test.yml","logs/info.log")
-# p input.series_execute_format("cb_process_perf.1d",Time.now)
-# 3.times do
-#   p input.series_execute_format("cb_process_perf.1d",Time.now)
-#   sleep 5
-# end

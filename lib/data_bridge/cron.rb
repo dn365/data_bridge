@@ -79,10 +79,3 @@ module DataBridge
     end
   end
 end
-
-# test
-# time = Time.parse("20140827 13:55:02")
-# puts time.strftime("%M")
-#
-# cron = DataBridge::Cron.new("5,15,25,35,45,55 * * * *", time)
-# puts cron.check_time?
