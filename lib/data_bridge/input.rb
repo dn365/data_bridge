@@ -7,20 +7,34 @@ module DataBridge
 
     def initialize(conf_file,logfile)
       @logfile = logfile
-      @conf_file = conf_file
+      # @conf_file = conf_file
       @logger = DataBridge::Logfile.new(logfile)
+      @conf = DataBridge::LoadConfig.new(conf_file)
       @content_pool = Hash.new
       @series_cron = Hash.new
-      content_pool_and_series_cron_initial
+      @series_execute = Hash.new
+      # content_pool_and_series_cron_initial
+      content_pool_and_series_cron_and_series_execute_initial
     end
 
-    def content_pool_and_series_cron_initial
-      conf = DataBridge::LoadConfig.new(@conf_file)
-      if conf.is_input?
-        conf.input.each do |c|
+    def content_pool_and_series_cron_and_series_execute_initial
+      # conf = DataBridge::LoadConfig.new(@conf_file)
+      if @conf.is_input?
+        @conf.input.each do |c|
           @series_cron[c["series_name"]] = c["cron"]
 
+          @series_execute[c["series_name"]] = Hash.new
+          @series_execute[c["series_name"]][:hosts] = Hash.new
+          @series_execute[c["series_name"]][:config] = {desc: c["desc"], runtime: c["runtime"]}
+
           c["hosts"].each do |host|
+            # series execute hash data
+            @series_execute[c["series_name"]][:hosts][host["host"]] = {
+              sql_group: host["sql_group"],
+              default_option: host["default_options"]
+            }
+
+            # content_pool hash data
             unless @content_pool["#{host["host"]}"]
               options = delete_hash(host,["sql_group","default_options"])
               options["logfile"] = DataBridge::Logfile.new(File.dirname(@logfile).to_s << "/#{host["host"]}.log")
@@ -42,55 +56,32 @@ module DataBridge
       end
     end
 
-    #获取配置中input数据
-    def series_execute_initial
-      conf = DataBridge::LoadConfig.new(@conf_file)
-      series_execute = Hash.new
-
-      if conf.is_input?
-        conf.input.each do |c|
-          series_execute[c["series_name"]] = Hash.new
-          series_execute[c["series_name"]][:hosts] = Hash.new
-          series_execute[c["series_name"]][:config] = {desc: c["desc"], runtime: c["runtime"]}
-
-          c["hosts"].each do |host|
-            series_execute[c["series_name"]][:hosts][host["host"]] = {
-              sql_group: host["sql_group"],
-              default_option: host["default_options"]
-            }
-          end
-        end
-      end
-      series_execute
-    end
 
     #重组sql语句字符串为可执行语句
     def series_execute_format(series_key,t)
-      series_data = series_execute_initial[series_key]
-      hosts = Hash.new
+      # Variable deep copy
+      series_execute_dupm = Marshal.load(Marshal.dump(@series_execute))[series_key]
+      series_data = series_execute_dupm
+      new_hosts = Hash.new
+      config = series_data[:config]
 
-      conf = series_data[:config]
-      hosts_group = series_data[:hosts]
-
-      hosts_group.each do |host_key,sql_query|
-        default_conf = sql_query[:default_option]
-        sqls = sql_query[:sql_group]
+      series_data[:hosts].each do |host_key,sql_query|
+        # default_conf = sql_query[:default_option]
+        # sqls = sql_query[:sql_group]
         sql_arr = Array.new
-        if sqls.respond_to?(:each)
-          sqls.each do |sql|
-            options = sql["options"] || default_conf || Hash.new
-            opt_format = at(options,t,conf[:runtime])
+        if sql_query[:sql_group].is_a?(Array)
+          sql_query[:sql_group].each do |sql|
+            options = sql["options"] || sql_query[:default_option] || {}
+            opt_format = at(options,t,config[:runtime])
 
             new_sql = {sql: gsub_replace(sql["sql"],opt_format)}
-            sql.each{|k,v| new_sql[k.to_sym] = v unless ["sql","options"].include?(k) }
-
+            delete_hash(sql,["sql","options"]).each{|k,v| new_sql[k.to_sym] = v}
             sql_arr << new_sql
           end
         end
-        hosts[host_key] = sql_arr
+        new_hosts[host_key] = sql_arr
       end
-
-      series_data[:hosts] = hosts
+      series_data[:hosts] = new_hosts
       series_data
     end
 
