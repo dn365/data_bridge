@@ -4,7 +4,6 @@ require File.expand_path("../cron", __FILE__)
 module DataBridge
   class Base
 
-
     def delete_hash(hash,delete_key)
       if hash.is_a?(Hash)
         delete_key.map{|i| hash.delete(i) } if delete_key.is_a?(Array)
@@ -51,7 +50,7 @@ module DataBridge
     end
 
     def data_type_format(data)
-      return data.to_f.round(3) if data.nil? || data.is_a?(Numeric)
+      return data.to_f.round(3) if data.nil? || data.is_a?(Numeric) || data.is_a?(BigDecimal)
       if data.to_i.to_s == data
         data.to_i
       elsif data.to_f.to_s == data

@@ -142,7 +142,8 @@ module DataBridge
         @logger.error("#{e.to_s}, Execute SQL: #{sql_string}")
       end
       if column_set
-        fix_column.each{|k| new_value[k.to_sym] = default_value }  if (fix_column = column_set - new_value.keys.collect{|i| i.to_s}).any?
+        fix_column = column_set - new_value.keys.collect{|i| i.to_s}
+        fix_column.each{|k| new_value[k.to_sym] = default_value }  if fix_column.any?
       end
       new_value
     end
@@ -155,7 +156,8 @@ module DataBridge
         if (sv_arr = svalue.to_a).any?
           if column_set
             svalue.to_a.each do |sv|
-              fix_column.each{|k| sv[k.to_s.downcase.to_sym] = default_value }  if (fix_column = (column_set + [time_column_key]) - sv.keys.map{|i| i.to_s}).any?
+              fix_column = (column_set + [time_column_key]) - sv.keys.map{|i| i.to_s}
+              fix_column.each{|k| sv[k.to_s.downcase.to_sym] = default_value }  if fix_column.any?
             end
           end
           new_value += sv_arr
