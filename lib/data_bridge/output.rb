@@ -45,6 +45,24 @@ module DataBridge
       end
     end
 
+    def cache_output(data=[])
+      return @logger.error("Input interface data is empty.") if data.nil? || data.empty? || (data.size.eql?(1) && data[:time])
+      if @output_content.empty?
+        @logger.error("Did not get to the output interface.")
+        @logger.info("Event: " << data.to_json.to_s)
+      else
+        @output_content.each do |okey,ocontent|
+          case okey.to_s
+          when "influxdb"
+            data.each do |d|
+              ocontent.write_point(d[:series_name],d[:data])
+              @logger.info("SeriesName: #{d[:series_name]}, Event: #{d[:data].to_s}")
+            end
+          end
+        end
+      end
+    end
+
     def out_influxdb(odb,tabname,data,conf_option)
       if conf_option[:runtime] && (conf_option[:runtime]["output_timestamp"] || conf_option[:runtime]["update"]) && !conf_option[:runtime]["multiline"]
         #判断数据输出是的时间字段是否需要格式化

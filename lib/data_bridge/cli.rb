@@ -30,6 +30,11 @@ module DataBridge
         opts.on('-o', '--thread_timeout NUMBER', 'Thread timeout value, default value 1800 Seconds.') do |thread_timeout|
           options[:thread_timeout] = thread_timeout
         end
+
+        opts.on('--cache', 'cache enabled') do
+          options[:cache] = true
+        end
+
         # opts.on('-b', '--background', 'Fork into the background') do
         #   options[:daemonize] = true
         # end
