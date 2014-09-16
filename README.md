@@ -11,9 +11,10 @@
 
 #### 当前版本  
 
-  * v0.0.2.1 功能重构版
+  * v0.0.2 功能重构版
 
 #### 修复Bug
+  新增sqlite memory 做中间cache,对数据多次处理模式
   新增参数default_value初始值,multiline结果是否多行,time_column_key设置时间序列字段  
   目前只支持数据库类型为 sqlite, oracle, influxdb
 
