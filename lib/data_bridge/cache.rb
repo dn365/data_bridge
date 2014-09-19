@@ -75,9 +75,11 @@ module DataBridge
       tname = options["tname"]
       field_set = options["field_set"]
       timestamp = (t - t.sec).to_i
-      random_tname = tname << rand(1000).to_s
+      random_tname = tname << "_" << Time.now.to_i.to_s
+      while @sqlite.table?(random_tname) do
+        random_tname = random_tname << "_" << Time.now.to_i.to_s << "_#{rand(1000)}"
+      end
 
-      random_tname = random_tname << "a_#{rand(1000)}" if @sqlite.table?(random_tname)
       @sqlite.create_table(random_tname,field_set)
       @sqlite.insert(random_tname,sql_data)
 

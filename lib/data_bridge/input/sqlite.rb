@@ -1,10 +1,12 @@
-require "jdbc/sqlite3"
+# require "jdbc/sqlite3"
+require File.expand_path("../../jar/sqlite-jdbc-3.8.5-pre1.jar",__FILE__)
 # require "sequel"
 module DataBridge
   class Sqlite
     def initialize(options={},cache_memory=true)
       if cache_memory
         @db = Sequel.connect("jdbc:sqlite::memory:", :logger => options["logfile"])
+        #@db = Sequel.connect("jdbc:sqlite::memory:")
       else
         @db = Sequel.connect("sqlite://#{options["database"]}", :logger => options["logfile"])
       end
