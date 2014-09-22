@@ -73,24 +73,25 @@ module DataBridge
 
     def cache_execute(options,sql_data,t)
       tname = options["tname"]
-      field_set = options["field_set"]
+      field_set = options["field_set"].merge({"created_at"=>"integer"})
       timestamp = (t - t.sec).to_i
-      random_tname = tname << "_" << Time.now.to_i.to_s
-      while @sqlite.table?(random_tname) do
-        random_tname = random_tname << "_" << Time.now.to_i.to_s << "_#{rand(1000)}"
-      end
+      random_tname = tname  #<< "_" << Time.now.to_i.to_s
+      @sqlite.create_table(random_tname,field_set) unless @sqlite.table?(random_tname)
 
-      @sqlite.create_table(random_tname,field_set)
+      # @sqlite.create_table(random_tname,field_set)
+      sql_data.each{|s| s[:created_at] = timestamp}
       @sqlite.insert(random_tname,sql_data)
 
       cache_data = Array.new
       options["cache_sql"].each do |c|
-        sql = c["sql"].gsub("$tname",random_tname)
+        sql = c["sql"].gsub("$tname",random_tname).gsub("$timestamp",timestamp.to_s)
         query = @sqlite.select(sql).to_a
-        query.collect{|q| q[:time] = timestamp}
+        # query.collect{|q| q[:time] = timestamp}
         cache_data << {series_name: c["series_name"],data: query}
       end
-      @sqlite.drop_table(random_tname)
+      #clear sql data
+      @sqlite.delete(random_tname,"created_at",timestamp)
+      # @sqlite.drop_table(random_tname)
       cache_data
     end
 

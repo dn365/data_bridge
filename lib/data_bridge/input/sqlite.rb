@@ -39,6 +39,11 @@ module DataBridge
       query
     end
 
+    def delete(table_name,ckey,cvalue)
+      delete_ds = @db["DELETE FROM #{table_name} where #{ckey} = ?",cvalue]
+      delete_ds.delete
+    end
+
     def discontent
       @db.disconnect
     end
