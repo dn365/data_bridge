@@ -56,7 +56,7 @@ module DataBridge
           when "influxdb"
             data.each do |d|
               ocontent.write_point(d[:series_name],d[:data])
-              @logger.info("SeriesName: #{d[:series_name]}, Event: #{d[:data].to_s}")
+              @logger.info("SeriesName: #{d[:series_name]}, Event: #{d[:data].to_json.to_s}")
             end
           end
         end
@@ -77,9 +77,14 @@ module DataBridge
         end
         #判断数据是否循环更新
         if conf_option[:runtime]["update"]
+          begin
             influxdb_query = odb.query("select * from #{tabname} where time > #{data[:time] - 1}s")
-            sequence_data = influxdb_query.any? ? influxdb_query.values.flatten![0]["sequence_number"] : nil
-            data[:sequence_number] = sequence_data if sequence_data
+          rescue => e
+            @logger.error(e.to_s)
+            influxdb_query = []
+          end
+          sequence_data = influxdb_query.any? ? influxdb_query.values.flatten![0]["sequence_number"] : nil
+          data[:sequence_number] = sequence_data if sequence_data
         end
       end
       if conf_option[:runtime]["multiline"] && conf_option[:runtime]["update"]
