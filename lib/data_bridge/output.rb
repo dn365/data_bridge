@@ -46,7 +46,7 @@ module DataBridge
     end
 
     def cache_output(data=[])
-      return @logger.error("Input interface data is empty.") if data.nil? || data.empty? || (data.size.eql?(1) && data[:time])
+      return @logger.error("Input interface data is empty.") if data.nil? || data.empty?
       if @output_content.empty?
         @logger.error("Did not get to the output interface.")
         @logger.info("Event: " << data.to_json.to_s)
@@ -55,9 +55,13 @@ module DataBridge
           case okey.to_s
           when "influxdb"
             data.each do |d|
-              ocontent.write_point(d[:series_name],d[:data])
-              @logger.info("SeriesName: #{d[:series_name]}, Event: #{d[:data].to_json.to_s}")
+              if d[:data].is_a?(Array)
+                d[:data].each{|pd| ocontent.write_point(d[:series_name], pd)}
+              else
+                ocontent.write_point(d[:series_name],d[:data])
+              end
             end
+            @logger.info("Cache Data, Event: #{data.to_json.to_s}")
           end
         end
       end
