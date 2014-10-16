@@ -25,6 +25,9 @@ module DataBridge
       when "influxdb"
         options["host"] = options["host"].split(",")
         return DataBridge::Influxdb.new options
+      when "graphite_influxdb"
+        options["host"] = options["host"].split(",")
+        return DataBridge::Influxdb.new options
       else
         nil
       end
@@ -40,6 +43,8 @@ module DataBridge
           case okey.to_s
           when "influxdb"
             out_influxdb(ocontent,tabname,data,conf_option)
+          when "graphite_influxdb"
+            out_influxdb_graphite_api(ocontent,tabname,data,conf_option)
           end
         end
       end
@@ -67,18 +72,97 @@ module DataBridge
       end
     end
 
+    def output_time(time,conf_option)
+      return false if conf_option[:runtime].nil? or conf_option[:runtime]["output_timestamp"].nil?
+      out_time_format = conf_option[:runtime]["output_timestamp"].split(":")
+      ntime = if out_time_format[0] == "start"
+        Time.at(time) - conf_option[:runtime]["interval"].to_i - conf_option[:runtime]["delay_time"].to_i
+      else
+        Time.at(time) - conf_option[:runtime]["delay_time"].to_i
+      end
+      Time.parse(ntime.strftime(out_time_format[1])).to_i
+    end
+
+    def out_influxdb_graphite_api(odb,tabname,data,conf_option)
+      format_data = []
+      if conf_option[:runtime]["multiline"]
+        tmp_format_data = []
+        data.each do |d|
+          time = d[:time]
+          d.map{|k,v| tmp_format_data << {s_name:"#{tabname}.#{k}", out_value: {time:time,value: v}} if k.to_s != "time"}
+        end
+        tmp_format_data.group_by{|i| i[:s_name]}.map{|k,v| format_data << {s_name: k, out_value: v.map{|vv| vv[:out_value]}}}
+      else
+        time = data[:time]
+        data.each{|k,v| format_data << {s_name: "#{tabname}.#{k}", out_value:{time:time, value: v}} if k.to_s != "time" }
+      end
+
+      @logger.debug("--- Debug Data Format_data 1 --- Data: #{format_data.to_json}")
+
+      if conf_option[:runtime] && (conf_option[:runtime]["output_timestamp"] || conf_option[:runtime]["update"]) && !conf_option[:runtime]["multiline"]
+        #判断数据输出是的时间字段是否需要格式化
+        out_time = output_time(data[:time],conf_option)
+        if out_time
+          time = out_time
+          format_data.each{|fd| fd[:out_value][:time] = time }
+        end
+
+        @logger.debug("--- Debug Data Format_data 2 --- Data: #{format_data.to_json}")
+
+        #判断数据是否循环更新
+        if conf_option[:runtime]["update"]
+          format_data.each do |fdb|
+            begin
+              influxdb_query = odb.query("select * from #{fdb[:s_name]} where time > #{time - 1}s")
+            rescue => e
+              @logger.error(e.to_s)
+              influxdb_query = []
+            end
+            sequence_data = influxdb_query.any? ? influxdb_query.values.flatten![0]["sequence_number"] : nil
+            fdb[:out_value][:sequence_number] = sequence_data if sequence_data
+          end
+        end
+      end
+      if conf_option[:runtime]["multiline"] && conf_option[:runtime]["update"]
+        #多行数据的sequence_number获取,数据更新
+        min_time = data.collect{|i| i[:time]}.min - 10
+        @logger.debug("--- Debug Data Format_data 2 --- Data: #{format_data.to_json}")
+        format_data.each do |k|
+          begin
+            influxdb_query = odb.query("select * from #{k[:s_name]} where time > #{min_time}s")
+          rescue => e
+            @logger.error(e.to_s)
+            influxdb_query = {}
+          end
+          if influxdb_query.any?
+            influxdb_query.values.flatten.each do |inf|
+              time = inf["time"]
+              sequence_data = inf["sequence_number"]
+              updb = k[:out_value].select{|i| i[:time] == time}[0]
+              updb[:sequence_number] = sequence_data if updb
+            end
+          end
+        end
+      end
+
+      # @logger.debug("--- Debug Data Format_data --- Data: #{format_data.to_json}")
+      if conf_option[:runtime]["multiline"]
+        format_data.each do |fd|
+          fd[:out_value].each{|d| odb.write_point(fd[:s_name],d)}
+        end
+      else
+        format_data.each do |fd|
+          odb.write_point(fd[:s_name],fd[:out_value])
+        end
+      end
+      @logger.info("Output graphite format data to influxdb, Data: #{format_data.to_json}")
+    end
+
     def out_influxdb(odb,tabname,data,conf_option)
       if conf_option[:runtime] && (conf_option[:runtime]["output_timestamp"] || conf_option[:runtime]["update"]) && !conf_option[:runtime]["multiline"]
         #判断数据输出是的时间字段是否需要格式化
-        if conf_option[:runtime]["output_timestamp"]
-          out_time_format = conf_option[:runtime]["output_timestamp"].split(":")
-          ntime = if out_time_format[0] == "start"
-            Time.at(data[:time]) - conf_option[:runtime]["interval"].to_i - conf_option[:runtime]["delay_time"].to_i
-          else
-            Time.at(data[:time]) - conf_option[:runtime]["delay_time"].to_i
-          end
-          data[:time] = Time.parse(ntime.strftime(out_time_format[1])).to_i
-        end
+        out_time = output_time(data[:time],conf_option)
+        data[:time] = out_time if out_time
         #判断数据是否循环更新
         if conf_option[:runtime]["update"]
           begin
@@ -93,12 +177,19 @@ module DataBridge
       end
       if conf_option[:runtime]["multiline"] && conf_option[:runtime]["update"]
         #多行数据的sequence_number获取,数据更新
-        influxdb_query = odb.query("select * from #{tabname} where time > #{data.collect{|i| i[:time]}.min - 10}s")
-        influxdb_query.values.flatten.each do |inf|
-          time = inf["time"]
-          sequence_data = inf["sequence_number"]
-          updb = data.select{|i| i[:time] == time}[0]
-          updb[:sequence_number] = sequence_data if updb
+        begin
+          influxdb_query = odb.query("select * from #{tabname} where time > #{data.collect{|i| i[:time]}.min - 10}s")
+        rescue => e
+          @logger.error(e.to_s)
+          influxdb_query = {}
+        end
+        if influxdb_query.any?
+          influxdb_query.values.flatten.each do |inf|
+            time = inf["time"]
+            sequence_data = inf["sequence_number"]
+            updb = data.select{|i| i[:time] == time}[0]
+            updb[:sequence_number] = sequence_data if updb
+          end
         end
       end
       if conf_option[:runtime]["multiline"]
