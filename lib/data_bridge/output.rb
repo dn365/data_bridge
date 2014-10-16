@@ -97,8 +97,6 @@ module DataBridge
         data.each{|k,v| format_data << {s_name: "#{tabname}.#{k}", out_value:{time:time, value: v}} if k.to_s != "time" }
       end
 
-      @logger.debug("--- Debug Data Format_data 1 --- Data: #{format_data.to_json}")
-
       if conf_option[:runtime] && (conf_option[:runtime]["output_timestamp"] || conf_option[:runtime]["update"]) && !conf_option[:runtime]["multiline"]
         #判断数据输出是的时间字段是否需要格式化
         out_time = output_time(data[:time],conf_option)
@@ -123,10 +121,11 @@ module DataBridge
           end
         end
       end
+
       if conf_option[:runtime]["multiline"] && conf_option[:runtime]["update"]
         #多行数据的sequence_number获取,数据更新
         min_time = data.collect{|i| i[:time]}.min - 10
-        @logger.debug("--- Debug Data Format_data 2 --- Data: #{format_data.to_json}")
+
         format_data.each do |k|
           begin
             influxdb_query = odb.query("select * from #{k[:s_name]} where time > #{min_time}s")
@@ -145,7 +144,6 @@ module DataBridge
         end
       end
 
-      # @logger.debug("--- Debug Data Format_data --- Data: #{format_data.to_json}")
       if conf_option[:runtime]["multiline"]
         format_data.each do |fd|
           fd[:out_value].each{|d| odb.write_point(fd[:s_name],d)}
