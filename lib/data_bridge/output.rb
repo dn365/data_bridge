@@ -105,8 +105,6 @@ module DataBridge
           format_data.each{|fd| fd[:out_value][:time] = time }
         end
 
-        @logger.debug("--- Debug Data Format_data 2 --- Data: #{format_data.to_json}")
-
         #判断数据是否循环更新
         if conf_option[:runtime]["update"]
           format_data.each do |fdb|
