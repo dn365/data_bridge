@@ -17,6 +17,16 @@ module DataBridge
       DataBridge::Cron.new(cron,t).check_time?
     end
 
+    def fun_sum(array=[])
+      return 0 if array.empty?
+      array.map(&:to_f).reduce(:+)
+    end
+
+    def fun_avg(array=[])
+      return 0 if array.empty?
+      fun_sum(array) / array.size
+    end
+
 
     def at(options,t, conf)
       if options.respond_to?(:each)

@@ -92,24 +92,36 @@ module DataBridge
       false
     end
 
+    def default_value_set(value)
+      return 0 if value.nil?
+      return nil if value.eql?("null")
+      value
+    end
+
     #执行单个series，获取执行结果
     def execute(series_key,t)
       series_execute = series_execute_format(series_key,t)
       series_value_hash = {time: (t - t.sec).to_i}
       series_value_hash = [] if series_execute[:config][:runtime]["multiline"]
 
-      default_value = series_execute[:config][:runtime]["default_value"].eql?("null") ? nil : (series_execute[:config][:runtime]["default_value"] || 0)
+      # default_value = series_execute[:config][:runtime]["default_value"].eql?("null") ? nil : (series_execute[:config][:runtime]["default_value"] || 0)
+      default_value = default_value_set(series_execute[:config][:runtime]["default_value"])
+
       time_column_key = series_execute[:config][:runtime]["time_column_key"]
 
       hosts = series_execute[:hosts]
+
       hosts.each do |host_name,host_array|
         db = @content_pool[host_name]
         host_array.each do |hsql|
+          #fix: add sql default value
+          default_value = default_value_set(hsql[:default_vaule]) if hsql[:default_vaule]
+
           if series_value_hash.is_a?(Array)
             sql_value = select_sql_value_multi_line(db,hsql[:sql],hsql[:column_set],time_column_key,default_value)
             series_value_hash += sql_value
           else
-            sql_value = select_sql_value(db,hsql[:sql],hsql[:column_set],hsql[:custom_key_and_value_column] || {},default_value)
+            sql_value = select_sql_value(db,hsql[:sql],hsql[:column_set],hsql[:custom_key_and_value_column] || {}, hsql[:column_function_set] || {}, default_value)
             series_value_hash = series_value_hash.merge(sql_value)
           end
         end
@@ -120,8 +132,19 @@ module DataBridge
       {data: series_value_hash, config: series_execute[:config]}
     end
 
+    def case_funtion(fun,values)
+      case fun
+      when "sum"
+        fun_sum(values)
+      when "avg"
+        fun_avg(fun_avg)
+      else
+        return nil
+      end
+    end
+
     #辅助函数，对执行过程和执行结果进行格式化, SQL执行结果为单行
-    def select_sql_value(db,sql_string,column_set,custom_key_and_value_column,default_value = 0)
+    def select_sql_value(db,sql_string,column_set,custom_key_and_value_column,function_column_set,default_value)
       new_value = Hash.new
       begin
         svalue = db.select(sql_string)
@@ -145,11 +168,27 @@ module DataBridge
         fix_column = column_set - new_value.keys.collect{|i| i.to_s}
         fix_column.each{|k| new_value[k.to_sym] = default_value }  if fix_column.any?
       end
+
+      # add colument function set
+      if function_column_set.any?
+        fun_hash = Hash.new
+        function_column_set["function_set"].each do |fset|
+          # k_name = fset["column_name"]
+          values = fset["column_key"].map{|i| new_value[i.to_sym]}
+          value = case_funtion(fset["function"],values)
+          fun_hash[fset["column_name"].to_sym] = value
+        end
+        if function_column_set["merger"]
+          new_value.merge(fun_hash)
+        else
+          new_value = fun_hash
+        end
+      end
       new_value
     end
 
     #辅助函数，对执行过程和执行结果进行格式化, 输出多行结果格式化
-    def select_sql_value_multi_line(db,sql_string,column_set,time_column_key,default_value = 0)
+    def select_sql_value_multi_line(db,sql_string,column_set,time_column_key,default_value)
       new_value = Array.new
       begin
         svalue = db.select(sql_string)
