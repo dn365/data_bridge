@@ -179,7 +179,7 @@ module DataBridge
           fun_hash[fset["column_name"].to_sym] = value
         end
         if function_column_set["merger"]
-          new_value.merge(fun_hash)
+          new_value = new_value.merge(fun_hash)
         else
           new_value = fun_hash
         end
