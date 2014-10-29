@@ -24,7 +24,7 @@ module DataBridge
 
     def fun_avg(array=[])
       return 0 if array.empty?
-      fun_sum(array) / array.size
+      (fun_sum(array) / array.size).round(2)
     end
 
 

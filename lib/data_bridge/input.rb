@@ -137,7 +137,7 @@ module DataBridge
       when "sum"
         fun_sum(values)
       when "avg"
-        fun_avg(fun_avg)
+        fun_avg(values)
       else
         return nil
       end
