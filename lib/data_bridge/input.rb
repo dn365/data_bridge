@@ -148,14 +148,16 @@ module DataBridge
       new_value = Hash.new
       begin
         svalue = db.select(sql_string)
-        svalue.each do |row|
-          if custom_key_and_value_column.any?
-            ckey = row[custom_key_and_value_column["key"].to_sym]
-            cvalue = row[custom_key_and_value_column["value"].to_sym]
-            new_value[ckey.downcase.to_sym] = data_type_format(cvalue)
-          else
-            row.each do |k,v|
-              new_value[k.to_s.downcase.to_sym] = data_type_format(v)
+        if svalue.to_a.any?
+          svalue.each do |row|
+            if custom_key_and_value_column.any?
+              ckey = row[custom_key_and_value_column["key"].to_sym]
+              cvalue = row[custom_key_and_value_column["value"].to_sym]
+              new_value[ckey.downcase.to_sym] = data_type_format(cvalue) if ckey
+            else
+              row.each do |k,v|
+                new_value[k.to_s.downcase.to_sym] = data_type_format(v)
+              end
             end
           end
         end
@@ -165,7 +167,7 @@ module DataBridge
         @logger.error("#{e.to_s}, Execute SQL: #{sql_string}")
       end
       if column_set
-        fix_column = column_set - new_value.keys.collect{|i| i.to_s}
+        fix_column = column_set.map{|i| i.downcase.to_s } - new_value.keys.collect{|i| i.to_s}
         fix_column.each{|k| new_value[k.to_sym] = default_value }  if fix_column.any?
       end
 
@@ -174,9 +176,9 @@ module DataBridge
         fun_hash = Hash.new
         function_column_set["function_set"].each do |fset|
           # k_name = fset["column_name"]
-          values = fset["column_key"].map{|i| new_value[i.to_sym]}
+          values = fset["column_key"].map{|i| new_value[i.downcase.to_sym]}
           value = case_funtion(fset["function"],values)
-          fun_hash[fset["column_name"].to_sym] = value
+          fun_hash[fset["column_name"].downcase.to_sym] = value
         end
         if function_column_set["merger"]
           new_value = new_value.merge(fun_hash)
