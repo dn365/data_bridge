@@ -48,6 +48,13 @@ input:
               key: column1 #字段名称, 此字段的结果为key
               value: column2 #字段名称, 此字段的结果为value
             column_set: ["test1","test2","test3"] #设定字段必须有值输出,如果获取为空则填入默认值
+            default_vaule: 0
+            column_function_set:
+              merger: false
+              function_set:
+                - column_name: "test01"
+                  column_key: ["test1","test2","test3"]
+                  function: sum #avg
             options:  #对Sql语句中的一下特定变量进行替换
               $beginmonth: "%Y%m"
               $beginday: "%Y%m%d"
