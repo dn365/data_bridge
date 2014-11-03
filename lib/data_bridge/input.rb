@@ -174,16 +174,18 @@ module DataBridge
       # add colument function set
       if function_column_set.any?
         fun_hash = Hash.new
+        fset_column_keys = Array.new
         function_column_set["function_set"].each do |fset|
           # k_name = fset["column_name"]
+          fset_column_keys += fset["column_key"].map{|i| i.downcase.to_sym}
           values = fset["column_key"].map{|i| new_value[i.downcase.to_sym]}
           value = case_funtion(fset["function"],values)
           fun_hash[fset["column_name"].downcase.to_sym] = value
         end
-        if function_column_set["merger"]
-          new_value = new_value.merge(fun_hash)
-        else
-          new_value = fun_hash
+
+        new_value = new_value.merge(fun_hash)
+        unless function_column_set["merger"]
+          delete_hash(new_value,fset_column_keys.uniq)
         end
       end
       new_value
