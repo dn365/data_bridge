@@ -121,7 +121,7 @@ module DataBridge
             sql_value = select_sql_value_multi_line(db,hsql[:sql],hsql[:column_set],time_column_key,default_value)
             series_value_hash += sql_value
           else
-            sql_value = select_sql_value(db,hsql[:sql],hsql[:column_set],hsql[:custom_key_and_value_column] || {}, hsql[:column_function_set] || {}, default_value)
+            sql_value = select_sql_value(db,hsql[:sql],hsql[:column_set],hsql[:custom_key_and_value_column] || {}, hsql[:column_function_set] || {}, default_value, hsql[:key_prefix])
             series_value_hash = series_value_hash.merge(sql_value)
           end
         end
@@ -145,7 +145,7 @@ module DataBridge
     end
 
     #辅助函数，对执行过程和执行结果进行格式化, SQL执行结果为单行
-    def select_sql_value(db,sql_string,column_set,custom_key_and_value_column,function_column_set,default_value)
+    def select_sql_value(db,sql_string,column_set,custom_key_and_value_column,function_column_set,default_value,key_prefix)
       new_value = Hash.new
       begin
         svalue = db.select(sql_string)
@@ -156,11 +156,15 @@ module DataBridge
               #fix custom columen array
 
               if custom_key_and_value_column["key"].size == 1 && custom_key_and_value_column["value"].size == 1
-                ckey = row[custom_key_and_value_column["key"].to_sym]
-                cvalue = row[custom_key_and_value_column["value"].to_sym]
+                ckey = row[custom_key_and_value_column["key"][0].to_sym]
+                ckey = key_prefix.to_s << "." << ckey.gsub(".","_").to_s if key_prefix
+
+                cvalue = row[custom_key_and_value_column["value"][0].to_sym]
                 new_value[ckey.downcase.to_sym] = data_type_format(cvalue) if ckey
               else
                 base_ckey = custom_key_and_value_column["key"].map{|i| row[i.to_sym].to_s.gsub(".","_")}.join(".")
+                base_ckey = key_prefix.to_s << "." << base_ckey if key_prefix
+                # base_ckey = custom_key_and_value_column["key"].map{|i| row[i.to_sym].to_s}.join(".")
 
                 custom_key_and_value_column["value"].each do |i|
                   ckey = base_ckey << "." << i.to_s
