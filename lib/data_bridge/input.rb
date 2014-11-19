@@ -126,6 +126,7 @@ module DataBridge
           end
         end
       end
+
       if series_value_hash.is_a?(Array)
         series_value_hash = group_by_array_to_hash(series_value_hash,time_column_key)
       end
@@ -151,9 +152,22 @@ module DataBridge
         if svalue.to_a.any?
           svalue.each do |row|
             if custom_key_and_value_column.any?
-              ckey = row[custom_key_and_value_column["key"].to_sym]
-              cvalue = row[custom_key_and_value_column["value"].to_sym]
-              new_value[ckey.downcase.to_sym] = data_type_format(cvalue) if ckey
+
+              #fix custom columen array
+
+              if custom_key_and_value_column["key"].size == 1 && custom_key_and_value_column["value"].size == 1
+                ckey = row[custom_key_and_value_column["key"].to_sym]
+                cvalue = row[custom_key_and_value_column["value"].to_sym]
+                new_value[ckey.downcase.to_sym] = data_type_format(cvalue) if ckey
+              else
+                base_ckey = custom_key_and_value_column["key"].map{|i| row[i.to_sym].to_s.gsub(".","_")}.join(".")
+
+                custom_key_and_value_column["value"].each do |i|
+                  ckey = base_ckey << "." << i.to_s
+                  cvalue = row[i.to_sym]
+                  new_value[ckey.downcase.to_sym] = data_type_format(cvalue) if ckey
+                end
+              end
             else
               row.each do |k,v|
                 new_value[k.to_s.downcase.to_sym] = data_type_format(v)
