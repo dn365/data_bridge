@@ -53,7 +53,9 @@ module DataBridge
       new_str = nil
       return str unless replace.any?
       replace.each do |rk,rv|
-        str = str.gsub(rk.to_s,rv.to_s)
+        # fix 精确匹配替换字符
+        tmp_regexp = Regexp::new("\\"+rk.to_s+'\b')
+        str = str.gsub(tmp_regexp,rv.to_s)
         new_str = str
       end
       new_str
