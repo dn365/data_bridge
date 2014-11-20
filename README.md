@@ -72,8 +72,8 @@
             - sql: "select a.a_test1 test1, a.test2 test2 FROM test_table_$beginmonth where created_at >= '$begin' AND created_at < '$end'"
               #指定数据中字段输出值为key和value,成Hash组合
               custom_key_and_value_column:
-                key: column1 #字段名称, 此字段的结果为key
-                value: column2 #字段名称, 此字段的结果为value
+                key: [column_k1,column_k2,column_k3] #字段名称, 此字段的结果为keys
+                value: [column_v1,column_v2,column_v3] #字段名称, 此字段的结果为values
               column_set: ["test1","test2","test3"] #设定字段必须有值输出,如果获取为空则填入默认值
               options:  #对Sql语句中的一下特定变量进行替换
                 $beginmonth: "%Y%m"
@@ -87,5 +87,5 @@
 
   ```
   cd data_bridge
-  bin/db_run -c conf/config.yml -l logs/demo/run.log -t 20 -o 1200
+  bin/db_run -c conf/config.yml -l logs/demo/run.log -t 20 -o 1200  
   ```

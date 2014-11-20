@@ -46,8 +46,8 @@ input:
             #指定数据中字段输出值为key和value,成Hash组合
             key_prefix: "test"
             custom_key_and_value_column:
-              key: [column_k1,column_k2,column_k3] #字段名称, 此字段的结果为key
-              value: [column_v1,column_v2,column_v3] #字段名称, 此字段的结果为value
+              key: [column_k1,column_k2,column_k3] #字段名称, 此字段的结果为keys
+              value: [column_v1,column_v2,column_v3] #字段名称, 此字段的结果为values
             column_set: ["test1","test2","test3"] #设定字段必须有值输出,如果获取为空则填入默认值
             default_vaule: 0
             column_function_set:
