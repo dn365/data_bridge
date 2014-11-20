@@ -156,24 +156,23 @@ module DataBridge
               #fix custom columen array
               if custom_key_and_value_column["key"].is_a?(String) || custom_key_and_value_column["value"].is_a?(String)
                 ckey = row[custom_key_and_value_column["key"].to_sym]
-                ckey = key_prefix.to_s << "." << ckey.gsub(".","_").to_s if key_prefix
+                ckey = "#{key_prefix}.#{ckey.gsub(".","_")}" if key_prefix
                 cvalue = row[custom_key_and_value_column["value"].to_sym]
                 new_value[ckey.downcase.to_sym] = data_type_format(cvalue)
 
               elsif custom_key_and_value_column["key"].size == 1 && custom_key_and_value_column["value"].size == 1
                 ckey = row[custom_key_and_value_column["key"][0].to_sym]
-                ckey = key_prefix.to_s << "." << ckey.gsub(".","_").to_s if key_prefix
+                ckey = "#{key_prefix}.#{ckey.gsub(".","_")}" if key_prefix
 
                 cvalue = row[custom_key_and_value_column["value"][0].to_sym]
                 new_value[ckey.downcase.to_sym] = data_type_format(cvalue) if ckey
               else
 
-                # base_ckey = custom_key_and_value_column["key"].map{|i| row[i.to_sym].to_s}.join(".")
+                base_ckey = custom_key_and_value_column["key"].map{|i| row[i.to_sym].to_s.gsub(".","_")}.join(".")
+                base_ckey = "#{key_prefix}.#{base_ckey}" if key_prefix
 
                 custom_key_and_value_column["value"].each do |i|
-                  base_ckey = custom_key_and_value_column["key"].map{|i| row[i.to_sym].to_s.gsub(".","_")}.join(".")
-                  base_ckey = key_prefix.to_s << "." << base_ckey if key_prefix
-                  ckey = base_ckey << "." << i.to_s
+                  ckey = "#{base_ckey}.#{i}"
                   cvalue = row[i.to_sym]
                   new_value[ckey.downcase.to_sym] = data_type_format(cvalue) if ckey
                 end
