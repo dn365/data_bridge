@@ -49,6 +49,11 @@ module DataBridge
       options
     end
 
+
+    def replace_string(string,old_str=".",new_str="_")
+      string.gsub(old_str,new_str)
+    end
+
     def gsub_replace(str,replace)
       new_str = nil
       return str unless replace.any?
