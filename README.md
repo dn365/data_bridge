@@ -14,11 +14,11 @@
   * v0.2 功能重构版
 
 #### 修复Bug&更新内容
-  2015-02-02 添加对Key-Value标记的多行时间序列数据做update操作,更新版本号0.2.8.1
-  更新sqlite-jdbc版本到3.8.5-pre
-  新增sqlite memory 做中间cache,对数据多次处理模式
-  新增参数default_value初始值,multiline结果是否多行,time_column_key设置时间序列字段  
-  目前只支持数据库类型为 sqlite, oracle, influxdb
+  * 2015-02-02 添加对Key-Value标记的多行时间序列数据做update操作,更新版本号0.2.8.1  
+  * 更新sqlite-jdbc版本到3.8.5-pre  
+  * 新增sqlite memory 做中间cache,对数据多次处理模式  
+  * 新增参数default_value初始值,multiline结果是否多行,time_column_key设置时间序列字段  
+  * 目前只支持数据库类型为 sqlite, oracle, influxdb  
 
 #### 执行参数说明  
 
