@@ -92,6 +92,13 @@ module DataBridge
       false
     end
 
+    #补录数据得到series_array
+    def fill_task
+      series_array = @series_cron.map{|s,c| s }
+      return series_array if series_array && series_array.any?
+      false
+    end
+
     def default_value_set(value)
       return 0 if value.nil?
       return nil if value.eql?("null")
@@ -276,6 +283,13 @@ module DataBridge
             #     end
             #   end
             # end
+            # svalue.to_a.each do |sv|
+            #   sv_tmp = {}
+            #   sv.each do |sk,ssv|
+            #     sv_tmp[sk.downcase.to_sym] = data_type_format(ssv)
+            #   end
+            #   new_value << sv_tmp
+            # end
             new_value = svalue.to_a
           end
           # new_value += sv_arr
@@ -288,7 +302,7 @@ module DataBridge
 
       if column_set
         new_value.each do |v|
-          fix_column = (column_set + [time_column_key]) - c.keys.map{|i| i.downcase.to_s }
+          fix_column = (column_set + [time_column_key]) - v.keys.map{|i| i.downcase.to_s }
           if fix_column.any?
             fix_column.each do |fc|
               v[fc.to_s.downcase.to_sym] = default_value

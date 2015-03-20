@@ -23,6 +23,10 @@ module DataBridge
           options[:log_file] = log
         end
 
+        opts.on('-d', '--date Time', 'Fill update data to from date .') do |date|
+          options[:date] = date
+        end
+
         opts.on('-t', '--max_thread NUMBER', 'The maximum number of threads running program, default value 10') do |max_thread|
           options[:max_thread] = max_thread
         end

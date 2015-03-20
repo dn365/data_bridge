@@ -145,6 +145,7 @@ module DataBridge
       if conf_option[:runtime]["multiline"]
         format_data.each do |fd|
           fd[:out_value].each{|d| odb.write_point(fd[:s_name],d)}
+          # @logger.debug("Multiline data: #{fd}")
         end
       else
         format_data.each do |fd|
