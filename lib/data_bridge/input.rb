@@ -154,6 +154,7 @@ module DataBridge
     #辅助函数，对执行过程和执行结果进行格式化, SQL执行结果为单行
     def select_sql_value(db,sql_string,column_set,custom_key_and_value_column,function_column_set,default_value,key_prefix)
       new_value = Hash.new
+      base_key = ""
       begin
         svalue = db.select(sql_string)
         if svalue.to_a.any?
@@ -164,6 +165,7 @@ module DataBridge
                 ckey = row[custom_key_and_value_column["key"].to_sym]
                 ckey = replace_string(ckey)
                 ckey = "#{key_prefix}.#{ckey}" if key_prefix
+                base_key = ckey
                 cvalue = row[custom_key_and_value_column["value"].to_sym]
                 new_value[ckey.downcase.to_sym] = data_type_format(cvalue)
 
@@ -171,14 +173,14 @@ module DataBridge
                 ckey = row[custom_key_and_value_column["key"][0].to_sym]
                 ckey = replace_string(ckey)
                 ckey = "#{key_prefix}.#{ckey}" if key_prefix
-
+                base_key = ckey
                 cvalue = row[custom_key_and_value_column["value"][0].to_sym]
                 new_value[ckey.downcase.to_sym] = data_type_format(cvalue) if ckey
               else
 
                 base_ckey = custom_key_and_value_column["key"].map{|i| replace_string(row[i.to_sym].to_s)}.join(".")
                 base_ckey = "#{key_prefix}.#{base_ckey}" if key_prefix
-
+                base_key = ckey
                 custom_key_and_value_column["value"].each do |i|
                   ckey = "#{base_ckey}.#{i}"
                   cvalue = row[i.to_sym]
@@ -198,7 +200,11 @@ module DataBridge
         @logger.error("#{e.to_s}, Execute SQL: #{sql_string}")
       end
       if column_set
-        fix_column = column_set.map{|i| i.downcase.to_s } - new_value.keys.collect{|i| i.to_s}
+        fix_column = if !base_key.empty?
+          column_set.map{|i| base_key + "." + replace_string(i.downcase.to_s) } - new_value.keys.collect{|i| i.to_s}
+        else
+          column_set.map{|i| i.downcase.to_s } - new_value.keys.collect{|i| i.to_s}
+        end
         fix_column.each{|k| new_value[k.to_sym] = default_value }  if fix_column.any?
       end
 
